@@ -5,8 +5,8 @@ paginate_path: "page:num"
 exclude: ["README.md"] # files to exclude
 highlighter: rouge
 markdown: kramdown
-disqus: 코딩하는 베짱이
-google_analytics: 코딩하는 베짱이
+disqus: 코딩하는베짱이
+google_analytics: 코딩하는베짱이
 title: cobe's blog
 
 defaults:
@@ -14,11 +14,11 @@ defaults:
     scope:
       path: "" # empty string for all files
     values:
-      title: 코딩하는 베짱이
+      title: 코딩하는베짱이
 
 description: Stylish Jekyll Theme
 author:
-  name: 코딩하는 베짱이
+  name: 코딩하는베짱이
   email: kown8447@naver.com
   github: kown8447
   twitter: kown8447
