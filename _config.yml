@@ -14,16 +14,16 @@ defaults:
     scope:
       path: "" # empty string for all files
     values:
-      title: dbyll
+      title: 코딩하는베짱이
 
 description: Stylish Jekyll Theme
 author:
-  name: dbyll
-  email: dbyll@ismaildemirbilek.com
-  github: dbtek
-  twitter: dbtek
-  pinterest: asd123
-  linkedin: asd123
+  name: 코딩하는베짱이
+  email: kown8447@naver.com
+  github: kown8447
+  twitter: kown8447
+  pinterest: 
+  linkedin: 
   bio: Your stylish, minimalist theme!
   email_md5: 726351295ec82e145928582f595aa3aa
 
