@@ -1,0 +1,308 @@
+---
+layout: post
+title: 생성자에 매개변수가 많다면 빌더를 고려하라
+categories: [EffectiveJava]
+tags: [빌더패턴, 자바빈즈패턴, 점층적 생성자 패턴, 불변, 많은 매개변수]
+---
+
+정적 팩터리와 생성자는 선택적 매개변수가 많을 때 적절히 대응하기 어렵다. 이럴 때는 빌더를 사용해보자
+
+## 점층적 생성자 패턴(Telescoping constructor patter)
+
+<br>
+
+~~~ JAVA
+public class Shape {
+    private final String name;  //필수
+    private int radius;
+    private int length;
+    private int width;
+    private String color;
+    private int area;
+
+    public Shape(String name, int radius) {
+        this.name = name;
+        this.radius = radius;
+    }
+
+    public Shape(String name, int length, int width) {
+        this.name = name;
+        this.length = length;
+        this.width = width;
+    }
+    
+    public Shape(String name, String color, int area) {
+        this.name = name;
+        this.color = color;
+        this.area = area;
+    }
+    
+    public Shape(String name, int radius, int length, int width, String color, int area) {
+        this.name = name;
+        this.radius = radius;
+        this.length = length;
+        this.width = width;
+        this.color = color;
+        this.area = area;
+    }
+}
+~~~
+
+<br>
+매개변수의 숫자만큼 생성자가 점층적으로 늘어나는 구조이다. 이런 생성자는 사용자가 설정하길 원치 않는 매개변수까지 포함하기 쉬운데, 어쩔 수 없이 그런 매개변수에도 값을 지정해줘야한다.
+<br>
+매개변수 개수가 많아지면 클라이언트 코드를 작성하거나 읽기 어렵다.
+<hr>
+
+## 자바빈즈 패턴(JavaBeans pattern)
+
+~~~JAVA
+public class Shape {
+    private String name;  //필수
+    private int radius;
+    private int length;
+    private int width;
+    private String color;
+    private int area;
+
+    public Shape() {}
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setRadius(int radius) {
+        this.radius = radius;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public void setArea(int area) {
+        this.area = area;
+    }
+}
+~~~
+<br>
+매개변수가 없는 생성자로 객체를 만든 후, 세터(setter) 메서드들을 호출해 원하는 매개변수이 값을 설정하는 방식이다.
+<br>
+자바빈즈 패턴에서는 객체 하나를 만들려면 메서드를 여러 개 호출해야 하고, 객체가 완전히 생성되기 전까지는 일관성(consistency)이 무너진 상태에 놓이게 된다.
+<br>
+일관성이 무너지기 때문에, 자바빈즈 패턴에서는 클래스를 불변으로 만들 수 없으며 스레드 안전성을 얻으려면 프로그래머가 추가 작업을 해줘야만 한다.
+
+## 빌더 패턴(Builder pattern)
+
+~~~JAVA
+public class Shape {
+    private final String name;  //필수
+    private final int radius;
+    private final int length;
+    private final int width;
+    private final String color;
+    private final int area;
+
+    public static class Builder {
+        private final String name;
+        private int radius;
+        private int length;
+        private int width;
+        private String color;
+        private int area;
+
+        public Builder(String name) {
+            this.name = name;
+        }
+
+        public Builder radius(int radius) {
+            this.radius = radius;
+            return this;
+        }
+
+        public Builder length(int length) {
+            this.length = length;
+            return this;
+        }
+
+        public Builder width(int width) {
+            this.width = width;
+            return this;
+        }
+
+        public Builder color(String color) {
+            this.color = color;
+            return this;
+        }
+
+        public Builder area(int area) {
+            this.area = area;
+            return this;
+        }
+
+        public Shape build() {
+            return new Shape(this);
+        }
+    }
+
+    private Shape(Builder builder) {
+        this.area = builder.area;
+        this.color = builder.color;
+        this.width = builder.width;
+        this.length = builder.length;
+        this.name = builder.name;
+        this.radius = builder.radius;
+    }
+}
+~~~
+<br>
+클라이언트는 필요한 객체를 직접 만드는 대신, 필수 매개변수만으로 생성자(혹은 정적 팩터리)를 호출해 빌더 객체를 얻는다.<br>
+그런 다음 빌더 객체가 제공하는 일종의 세터 메서드들로 원하는 선택 매개변수들을 설정한다.<br>
+마지막으로 매개변수가 없는 build 메서드를 호출해 우리에게 필요한(보통은 불변인) 객체를 얻는다.
+<br><br>
+빌더의 세터 메서드들은 자신을 반환하기 때문에 연쇄적으로 호출할 수 있다. 이런 방식을 플루언트 API(fluent API) 혹은 메서드 연쇄(method chaining)라 한다.
+<br><br>
+
+~~~JAVA
+Shape shape = new Shape.Builder("rectangle").width(2).length(2).build();
+~~~
+
+<br>
+이 클라이언트 코드는 쓰기 쉽고, 무엇보다도 읽기 쉽다.
+<br><br>
+
+**빌더 패턴은 계층적으로 설계된 클래스와 함께 쓰기에 좋다.** 각 계층의 클래스에 관련 빌더를 멤버로 정의한다.
+<br>추상 클래스는 추상 빌더를, 구체 클래스는 구체 빌더를 갖게 한다.
+
+~~~java
+public abstract class Character {
+
+    public enum PASSIVE_SKILLS { RUN, FLY, FIREBALL, GAURD, SMASH }
+    final Set<PASSIVE_SKILLS> passiveSkills;
+
+    abstract static class Builder<T extends Builder<T>> {
+        EnumSet<PASSIVE_SKILLS> passiveSkills = EnumSet.noneOf(PASSIVE_SKILLS.class);
+
+        public T learnPassiveSkill(PASSIVE_SKILLS passiveSkill) {
+            passiveSkills.add(Objects.requireNonNull(passiveSkill));
+            return self();
+        }
+
+        abstract Character build();
+
+        protected abstract T self();
+    }
+
+    Character(Builder<?> builder) {
+        this.passiveSkills = builder.passiveSkills.clone();
+    }
+}
+~~~
+
+Character.Builder 클래스는 **재귀적 타입한정**을 이용하는 제네릭 타입이다.
+<br>
+추상 메서드인 self 를 더해 하위 클래스에서는 형변환하지 않고도 메서드 연쇄를 지원할 수 있다.
+<br><br>
+
+~~~java
+public class Warrior extends Character {
+
+    private final int strength;
+
+    public static class Builder extends Character.Builder<Builder> {
+
+        private final int strength;
+
+        public Builder(int strength) {
+            this.strength = Objects.requireNonNull(strength);
+        }
+
+        @Override
+        public Warrior build() {
+            return new Warrior(this);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+    }
+
+    private Warrior(Builder builder) {
+        super(builder);
+        this.strength = builder.strength;
+    }
+}
+~~~
+<br><br>
+
+~~~java
+public class Magician extends Character {
+
+    private final int mana;
+
+    public static class Builder extends Character.Builder<Builder> {
+
+        private final int mana;
+
+        public Builder(int mana) {
+            this.mana = Objects.requireNonNull(mana);
+        }
+
+        @Override
+        public Magician build() {
+            return new Magician(this);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+    }
+
+    private Magician(Builder builder) {
+        super(builder);
+        this.mana = builder.mana;
+    }
+}
+~~~
+
+<br>
+각 하위 클래스의 빌더가 정의한 build 메서드는 해당하는 구체 하위 클래스를 반환하도록 선언한다.
+<br>하위 클래스의 메서드가 상위 클래스의 메서드가 정의한 반환타입이 아닌, 그 하위 타입을 반환하는 기능을
+
+**공변반환 타이핑(covariant return typing)** 이라 한다. <br>
+이 기능을 이용하면 클라이언트가 형변환에 신경쓰지 않고도 빌더를 사용할 수 있다.
+
+<br><br>
+
+~~~java
+Warrior warrior = new Warrior.Builder(30).learnPassiveSkill(PASSIVE_SKILLS.GAURD).learnPassiveSkill(PASSIVE_SKILLS.SMASH).build();
+Magician magician = new Magician.Builder(20).learnPassiveSkill(PASSIVE_SKILLS.FIREBALL).learnPassiveSkill(PASSIVE_SKILLS.FLY).build();
+~~~
+
+<br>
+생성자로는 누릴 수 없는 사소한 이점으로, 빌더를 이용하면 가변인수 매개변수를 여러개 사용할 수 있다.
+
+<hr>
+
+## 단점
+
+* 객체를 만들려면, 그에 앞서 빌더부터 만들어야 한다.
+* 점층적 생성자 패턴보다는 코드가 장황해서, 매개변수 4개 이상은 되어야 값어치를 한다.
+
+## 핵심정리
+
+생성자나 정적 팩터리가 처리해야 할 매개변수가 많다면 빌더 패턴을 선택하는게 더 낫다.
+<br> 매개변수 중 다수가 필수가 아니거나 같은 타입이면 특히 더 그렇다. 빌더는 점층적 생성자보다 클라이언트 코드를 읽고 쓰기가 훨씬 간결하고, 자바빈즈보다 훨씬 안전하다.
+<hr>
+
+## 참고
+* EFFECTIVE JAVA 3/E - 아이템2. 생성자에 매개변수가 많다면 빌더를 고려하라
