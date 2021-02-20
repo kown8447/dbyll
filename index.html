@@ -19,11 +19,6 @@ tagline:
     {{ post.date | date: "%Y" }}
   </span>
 
-    <h2>
-        <a href="{{ site.BASE_PATH }}{{ post.url }}">{{ post.title }}</a>
-    </h2>
-
-    {% for post in site.posts %}
     <div class="home-post-list">
         <h4><a href="{{ post.url }}" class="link-post_list">{{ post.title }}</a></h4>
         <p class="post-meta">
@@ -34,7 +29,6 @@ tagline:
             <p class="text-right"><a href="{{ post.url }}">read more...</a></p>
         </div>
     </div>
-    {% endfor %}
 
 </article>
 {% endfor %}
