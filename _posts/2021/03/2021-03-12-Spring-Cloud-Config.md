@@ -172,32 +172,38 @@ URL 호출결과는 아래와 같다.
 
 ~~~ groovy
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
-    implementation 'org.springframework.cloud:spring-cloud-starter-bus-amqp'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 ~~~
 <br>
+Spring 2.4.1 부터 spring cloud commons는 기본적으로 bootstrap.yml을 지원하지 않는다.
 
-다음으로 application.yml에 아래의 속성을 추가하자.
+[How to config client work with spring 2.4.1 and cloud 2020.0.0?](https://stackoverflow.com/questions/65486566/how-to-config-client-work-with-spring-2-4-1-and-cloud-2020-0-0)
+
+대신에, application.properties 나 yml 에서 'spring.config.import' 를 설정해 주는 식으로 변경되었다.
+기존 방식대로 bootstrap.yml을 사용하려면, 'spring-cloud-starter-bootstrap'을 추가하고 application.yml에는 
+spring.cloud.bootstrap.enabled=true 설정을 추가해줘야한다.
+(진짜 이걸로 얼마나 오래 삽질한지 모르겠다.)
+이 과정이 번거롭기 때문에, 나는 새롭게 변경된 설정으로 진행하겠다.
+
+그럼 아래처럼 application.yml 을 작성하자.
+
 ~~~yaml
+server:
+  port: 8082
+
 spring:
   application:
     name: demo
   profiles:
     active: local
-  config:
-    uri: http://localhost:8888
+  config.import: configserver:http://localhost:8888
 ~~~
 <br>
-앞서 언급한것처럼, 기본적으로 ConfigClient는 localhost의 8888 포트를 구성서버 실행중인것으로 간주한다.
-하지만 실제 환경에서는 도메인이나 포트가 변경될 수 있으니 위의 설정처럼 spring.cloud.config.uri 속성을 설정하여 구성 서버의 위치를 알려주자.
-또한, 구성 서버에 애플리케이션과 프로파일을 알려주어 URL을 맵핑할 수 있도록 spring.application.name과 spring.profiles.active를 지정하면 된다.
-
-(아, 참고로 많은 blog에서 config client 설정을 bootstrap.yml 로 하고 있는데, 나도 처음에 이걸로 설정했다가 속성을 받아오지 못해서 한참동안 삽질을 했다.
-알고 보니, spring cloud config Ilford 버전부터는 bootstrap.yml 을 지원하지 않는다고 하니 이점 참고하자. [Client 의 bootstrap.yml](https://hongdori2.tistory.com/112))
+구성 서버에 애플리케이션과 프로파일을 알려주어 URL을 맵핑할 수 있도록 spring.application.name과 spring.profiles.active를 지정하면 된다.
 
 이제 Config Server에서 제대로 속성을 가져왔는지 확인할 수 있는 Test용 Controller를 만들어보자.
 
